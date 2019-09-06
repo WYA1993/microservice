@@ -7,7 +7,8 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 
 /**
  * 授权服务器
- * Created by Administrator on 2019/9/1.
+ * @author Curise
+ * @date 2019-09-06
  */
 @Configuration
 @EnableAuthorizationServer
@@ -16,11 +17,16 @@ public class OAuth2AuthorizationServer extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.inMemory()
+                // 客户端id
                 .withClient("app")
+                // 客户端密钥
                 .secret("123")
+                // 权限
                 .scopes("read","write")
+                // 获取授权码后重定向地址
                 .redirectUris("http://localhost:9000/callback")
                 // 授权码和刷新token
                 .authorizedGrantTypes("authorization_code","refresh_token");
     }
+
 }
