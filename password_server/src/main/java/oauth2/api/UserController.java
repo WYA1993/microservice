@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class UserController {
 
-    @GetMapping("/userInfo")
+    @GetMapping("/api/userInfo")
     public ResponseEntity<UserInfo> getUserInfo(){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String email = user.getUsername() + "@qq.com";

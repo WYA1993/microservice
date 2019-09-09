@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>authcode_server</artifactId>
-    <description>OAuth2授权码模式</description>
+    <description>OAuth2.0授权码模式</description>
 
     <dependencies>
         <dependency>

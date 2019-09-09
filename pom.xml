@@ -20,6 +20,7 @@
         <java.version>1.8</java.version>
         <spring.boot.version>1.5.10.RELEASE</spring.boot.version>
         <lombok.version>1.16.20</lombok.version>
+        <maven.compiler.plugin>3.6.1</maven.compiler.plugin>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -42,6 +43,15 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin}</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
