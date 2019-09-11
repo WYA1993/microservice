@@ -10,6 +10,7 @@
     <modules>
         <module>authcode_server</module>
         <module>password_server</module>
+        <module>implicit_server</module>
     </modules>
     <packaging>pom</packaging>
     <description>微服务架构核心精讲视频学习代码</description>
