@@ -25,6 +25,10 @@ public class OAuth2AuthorizationServer extends AuthorizationServerConfigurerAdap
                 .scopes("read","write")
                 // 获取授权码后重定向地址
                 .redirectUris("http://localhost:9000/callback")
+                //令牌有效期秒
+                .accessTokenValiditySeconds(10)
+                // 刷新令牌有效期秒
+                //.refreshTokenValiditySeconds(1000)
                 // 授权码和刷新token
                 .authorizedGrantTypes("authorization_code","refresh_token");
     }
