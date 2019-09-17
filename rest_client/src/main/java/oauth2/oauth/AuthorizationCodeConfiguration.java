@@ -24,12 +24,12 @@ public class AuthorizationCodeConfiguration {
         return encoded;
     }
 
-    public MultiValueMap<String, String> getBody(String authorizationCode) {
+    public MultiValueMap<String, String> getBody(String authorizationCode,String redirectUri) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "authorization_code");
         formData.add("scope", "read");
         formData.add("code", authorizationCode);
-        formData.add("redirect_uri", "http://localhost:9001/callback");
+        formData.add("redirect_uri", redirectUri);
         return formData;
     }
 

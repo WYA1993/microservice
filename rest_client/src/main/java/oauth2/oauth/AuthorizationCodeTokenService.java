@@ -1,12 +1,16 @@
 package oauth2.oauth;
 
+import oauth2.entity.ClientInfo;
 import oauth2.entity.OAuth2Token;
+import oauth2.entity.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.UnsupportedEncodingException;
@@ -25,28 +29,29 @@ import java.util.Map;
 public class AuthorizationCodeTokenService {
     @Autowired
     private AuthorizationCodeConfiguration configuration;
+    @Autowired
+    private ClientInfo clientInfo;
 
     public String getAuthorizationEndpoint() {
-        String endpoint = "http://localhost:8080/oauth/authorize";
 
         Map<String, String> authParameters = new HashMap<>();
-        authParameters.put("client_id", "app");
-        authParameters.put("response_type", "code");
+        authParameters.put("client_id", clientInfo.getClientId());
+        authParameters.put("response_type", clientInfo.getResponseType());
         authParameters.put("redirect_uri",
-                getEncodedUrl("http://localhost:9000/callback"));
-        authParameters.put("scope", getEncodedUrl("read"));
-
-        return buildUrl(endpoint, authParameters);
+                getEncodedUrl(clientInfo.getRedirectUri()));
+        authParameters.put("scope", clientInfo.getScope());
+        authParameters.put("state", clientInfo.getState());
+        return buildUrl(authParameters);
     }
 
-    private String buildUrl(String endpoint, Map<String, String> parameters) {
+    private String buildUrl(Map<String, String> parameters) {
         List<String> paramList = new ArrayList<>(parameters.size());
 
         parameters.forEach((name, value) -> {
             paramList.add(name + "=" + value);
         });
 
-        return endpoint + "?" + paramList.stream()
+        return clientInfo.getAuthorizeUri() + "?" + paramList.stream()
                 .reduce((a, b) -> a + "&" + b).get();
     }
 
@@ -60,13 +65,13 @@ public class AuthorizationCodeTokenService {
 
     public OAuth2Token getToken(String authorizationCode) {
         RestTemplate rest = new RestTemplate();
-        String authBase64 = configuration.encodeCredentials("clientapp",
-                "112233");
+        String authBase64 = configuration.encodeCredentials(clientInfo.getClientId(),
+                clientInfo.getSecret());
 
         RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(
-                configuration.getBody(authorizationCode),
+                configuration.getBody(authorizationCode, clientInfo.getRedirectUri()),
                 configuration.getHeader(authBase64), HttpMethod.POST,
-                URI.create("http://localhost:8080/oauth/token"));
+                URI.create(clientInfo.getTokenUri()));
 
         ResponseEntity<OAuth2Token> responseEntity = rest.exchange(
                 requestEntity, OAuth2Token.class);
@@ -78,5 +83,27 @@ public class AuthorizationCodeTokenService {
         throw new RuntimeException("error trying to retrieve access token");
     }
 
+    public UserInfo tryToGetUserInfo(String token) {
+        RestTemplate restTemplate = new RestTemplate();
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add("Authorization", "Bearer " + token);
+        String endpoint = clientInfo.getUserInfoUri();
+
+        try {
+            RequestEntity<Object> request = new RequestEntity<>(
+                    headers, HttpMethod.GET, URI.create(endpoint));
+
+            ResponseEntity<UserInfo> userInfo = restTemplate.exchange(request, UserInfo.class);
+
+            if (userInfo.getStatusCode().is2xxSuccessful()) {
+                return userInfo.getBody();
+            } else {
+                throw new RuntimeException("it was not possible to retrieve user profile");
+            }
+        } catch (HttpClientErrorException e) {
+            e.printStackTrace();
+            throw new RuntimeException("it was not possible to retrieve user profile");
+        }
+    }
 
 }

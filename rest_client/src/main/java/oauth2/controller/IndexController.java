@@ -4,18 +4,11 @@ import oauth2.dao.UserRepository;
 import oauth2.entity.*;
 import oauth2.oauth.AuthorizationCodeTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-import java.net.URI;
 import java.util.*;
 
 /**
@@ -30,6 +23,8 @@ public class IndexController {
 
     @Autowired
     private UserRepository users;
+    @Autowired
+    private ClientInfo clientInfo;
 
     @GetMapping("/")
     public String home() {
@@ -54,13 +49,16 @@ public class IndexController {
         ModelAndView mv = new ModelAndView("mainpage");
         mv.addObject("user", clientUser);
 
-        tryToGetUserInfo(mv, clientUser.getAccessToken());
-
+        UserInfo userInfo = tokenService.tryToGetUserInfo(clientUser.getAccessToken());
+        mv.addObject("userInfo", userInfo);
         return mv;
     }
 
     @GetMapping("/callback")
-    public ModelAndView callback(String code, String state) {
+    public ModelAndView callback(@RequestParam("code") String code, @RequestParam("state") String state) {
+        if (!Objects.equals(state, clientInfo.getState())) {
+            throw new RuntimeException("Invalid Certificate");
+        }
         ClientUserDetails userDetails = (ClientUserDetails) SecurityContextHolder
                 .getContext().getAuthentication().getPrincipal();
         ClientUser clientUser = userDetails.getClientUser();
@@ -72,35 +70,11 @@ public class IndexController {
         long validIn = System.currentTimeMillis() + Long.parseLong(token.getExpiresIn());
         tokenValidity.setTime(new Date(validIn));
         clientUser.setAccessTokenValidity(tokenValidity);
-
+        clientUser.setRefreshToken(token.getRefreshToken());
         users.save(clientUser);
 
         return new ModelAndView("redirect:/mainpage");
     }
-
-    private void tryToGetUserInfo(ModelAndView mv, String token) {
-        RestTemplate restTemplate = new RestTemplate();
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Authorization", "Bearer " + token);
-        String endpoint = "http://localhost:8080/api/userinfo";
-
-        try {
-            RequestEntity<Object> request = new RequestEntity<>(
-                    headers, HttpMethod.GET, URI.create(endpoint));
-
-            ResponseEntity<UserInfo> userInfo = restTemplate.exchange(request, UserInfo.class);
-
-            if (userInfo.getStatusCode().is2xxSuccessful()) {
-                mv.addObject("userInfo", userInfo.getBody());
-            } else {
-                throw new RuntimeException("it was not possible to retrieve user profile");
-            }
-        } catch (HttpClientErrorException e) {
-            throw new RuntimeException("it was not possible to retrieve user profile");
-        }
-    }
-
-
 
 
 }
