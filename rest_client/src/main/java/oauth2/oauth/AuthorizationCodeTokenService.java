@@ -88,7 +88,6 @@ public class AuthorizationCodeTokenService {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add("Authorization", "Bearer " + token);
         String endpoint = clientInfo.getUserInfoUri();
-
         try {
             RequestEntity<Object> request = new RequestEntity<>(
                     headers, HttpMethod.GET, URI.create(endpoint));

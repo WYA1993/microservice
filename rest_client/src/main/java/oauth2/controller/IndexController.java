@@ -31,8 +31,8 @@ public class IndexController {
         return "index";
     }
 
-    @GetMapping("/mainpage")
-    public ModelAndView mainpage() {
+    @GetMapping("/mainPage")
+    public ModelAndView mainPage() {
         ClientUserDetails userDetails = (ClientUserDetails) SecurityContextHolder
                 .getContext().getAuthentication().getPrincipal();
         ClientUser clientUser = userDetails.getClientUser();
@@ -46,7 +46,7 @@ public class IndexController {
                 new Entry("entry 1"),
                 new Entry("entry 2")));
 
-        ModelAndView mv = new ModelAndView("mainpage");
+        ModelAndView mv = new ModelAndView("mainPage");
         mv.addObject("user", clientUser);
 
         UserInfo userInfo = tokenService.tryToGetUserInfo(clientUser.getAccessToken());
@@ -73,7 +73,7 @@ public class IndexController {
         clientUser.setRefreshToken(token.getRefreshToken());
         users.save(clientUser);
 
-        return new ModelAndView("redirect:/mainpage");
+        return new ModelAndView("redirect:/mainPage");
     }
 
 
